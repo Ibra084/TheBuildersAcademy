@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --color-ink: #17212d;
+  --color-ink-soft: #5c6878;
+  --color-surface: #edf1f5;
+  --color-accent-blue: #366dcc;
+  --color-accent-blue-dark: #2856a6;
+  --color-accent-purple: #8b5cf6;
+  --color-accent-teal: #138777;
+}
+
+html { scroll-behavior: smooth; scroll-padding-top: 110px; }
+body { margin: 0; background: var(--color-surface); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+::selection { background: #bacee8; color: #17212d; }
+a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button, a { touch-action: manipulation; }
+button:not(:disabled), a { cursor: pointer; }
+:focus-visible { outline: 3px solid #5284ce; outline-offset: 4px; }
+
+@layer components {
+  .app-surface {
+    min-height: 100dvh;
+    background: #edf1f5;
+  }
+  .glass-card, .glass-panel, .glass-nav {
+    background: rgba(255,255,255,.65);
+    border: 1px solid rgba(255,255,255,.88);
+    box-shadow: inset 0 1px 0 #fff, 0 8px 28px -16px rgba(37,54,77,.2);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+  }
+  .glass-panel { background: rgba(255,255,255,.5); box-shadow: inset 0 1px 0 #fff, 0 28px 65px -35px rgba(25,43,70,.35); }
+  .glass-nav { background: rgba(255,255,255,.78); box-shadow: inset 0 1px 0 #fff, 0 8px 32px -16px rgba(25,43,70,.25); }
+  .glass-dark {
+    background: radial-gradient(ellipse at 90% 0%, rgba(129,153,187,.24), transparent 65%), linear-gradient(135deg, rgba(36,46,60,.96), rgba(15,21,30,.96));
+    border: 1px solid rgba(255,255,255,.18);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 16px 40px -25px rgba(14,25,41,.45);
+    backdrop-filter: blur(28px) saturate(140%);
+    -webkit-backdrop-filter: blur(28px) saturate(140%);
+  }
+  .solid-btn { background: linear-gradient(160deg, #364353, #19222e); box-shadow: inset 0 1px 0 #ffffff35, 0 4px 10px #19222e18; transition: transform .2s ease, box-shadow .2s ease; }
+  .solid-btn:hover { transform: translateY(-1px); box-shadow: inset 0 1px 0 #ffffff35, 0 7px 18px #19222e30; }
+  .accent-text { color: var(--color-accent-blue); }
+  .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; }
+  .glass-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #fff; background: #ffffff75; border-radius: 999px; padding: 9px 14px; color: #516277; }
+  .status-dot { height: 6px; width: 6px; border-radius: 50%; background: #498878; box-shadow: 0 0 0 3px #49887815; }
+  .landing-hero { padding-top: 148px; padding-bottom: 64px; }
+  .preview-content { background: linear-gradient(135deg, #e7edf480, #f9f9fb65); }
+  .preview-titlebar i { display: block; width: 7px; height: 7px; border-radius: 50%; background: #a7b2bf; }
+  .portal-sidebar { top: 12px; left: 12px; height: calc(100dvh - 24px); border-radius: 24px; }
+  .portal-header { margin: 12px 16px 0; border-radius: 22px; top: 12px; }
+}
+
+@media (max-width: 639px) {
+  .landing-hero { padding-top: 124px; padding-bottom: 40px; }
+  .portal-header { margin: 8px; top: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-card, .glass-panel, .glass-nav { background: #f7f9fc; }
+}
+
+.auth-typography, .portal-typography { font-family: "Inter", Arial, sans-serif; }
+.auth-typography .font-extrabold, .portal-typography .font-extrabold { font-weight: 600; }
+
+
+
+.auth-scroll { scrollbar-width: none; }
+.auth-scroll::-webkit-scrollbar { display: none; }
+
+.portal-surface { background: #edf1f5; display: flow-root; }
+.portal-surface .portal-header { background: #edf1f5; box-shadow: none; border: 0; border-radius: 0; margin-top: 0; top: 0; }
