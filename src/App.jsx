@@ -5,6 +5,8 @@ import AdminRoute from './components/AdminRoute'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import DigestArchive from './pages/DigestArchive'
+import DigestIssue from './pages/DigestIssue'
 import PortalLayout from './pages/portal/PortalLayout'
 import Dashboard from './pages/portal/Dashboard'
 import Sessions from './pages/portal/Sessions'
@@ -23,6 +25,8 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/digest" element={<DigestArchive />} />
+          <Route path="/digest/:id" element={<DigestIssue />} />
           <Route
             path="/portal"
             element={

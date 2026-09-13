@@ -3,6 +3,7 @@ import { getAllUsers, getInitials } from '../../lib/auth'
 import { useAuth } from '../../context/AuthContext'
 import { useSessions } from '../../hooks/useSessions'
 import CreateSession from '../../components/portal/CreateSession'
+import DigestManager from '../../components/portal/DigestManager'
 import { useCheckIns, startCheckIn, endCheckIn } from '../../lib/checkin'
 
 function statusLabel(status) {
@@ -49,6 +50,9 @@ export default function Admin() {
       </div>
 
       {(actionError || checkInError) && <p role="alert" className="text-sm text-red-600">{actionError || checkInError}</p>}
+
+      <DigestManager />
+
       <CreateSession onCreated={session => setSelectedSessionId(session.id)} />
       {sessionsError && <p role="alert" className="text-sm text-red-600">Could not load sessions: {sessionsError}</p>}
       <div className="glass-card rounded-[1.75rem] p-6 sm:p-8">

@@ -75,3 +75,28 @@ button:not(:disabled), a { cursor: pointer; }
 
 .portal-surface { background: #edf1f5; display: flow-root; }
 .portal-surface .portal-header { background: #edf1f5; box-shadow: none; border: 0; border-radius: 0; margin-top: 0; top: 0; }
+
+/* Rendered Markdown body of an imported/written digest article. */
+.digest-body { font-size: 16px; line-height: 1.75; color: var(--color-ink-soft); }
+.digest-body > * + * { margin-top: 1.25em; }
+.digest-body h1, .digest-body h2, .digest-body h3 {
+  color: var(--color-ink); font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; margin-top: 1.75em;
+}
+.digest-body h1 { font-size: 1.5em; }
+.digest-body h2 { font-size: 1.3em; }
+.digest-body h3 { font-size: 1.1em; }
+.digest-body p { margin-top: 1.25em; }
+.digest-body a { color: var(--color-accent-blue); font-weight: 500; text-decoration: underline; text-underline-offset: 2px; }
+.digest-body strong { color: var(--color-ink); font-weight: 600; }
+.digest-body ul, .digest-body ol { margin-top: 1.25em; padding-left: 1.25em; }
+.digest-body ul { list-style: disc; }
+.digest-body ol { list-style: decimal; }
+.digest-body li + li { margin-top: 0.5em; }
+.digest-body blockquote {
+  border-left: 3px solid rgba(23,33,45,.15); padding-left: 1em; font-style: italic; color: var(--color-ink-soft);
+}
+.digest-body img { border-radius: 16px; width: 100%; height: auto; }
+.digest-body pre { background: rgba(23,33,45,.05); border-radius: 12px; padding: 1em; overflow-x: auto; font-size: 0.85em; }
+.digest-body code { background: rgba(23,33,45,.06); border-radius: 4px; padding: 0.15em 0.4em; font-size: 0.9em; }
+.digest-body pre code { background: none; padding: 0; }
+.digest-body hr { border: 0; border-top: 1px solid rgba(23,33,45,.1); margin: 2em 0; }
