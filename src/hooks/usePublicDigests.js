@@ -7,12 +7,11 @@ const CACHE_KEY = 'issues'
 export function usePublicDigests() {
   const cached = getCached(CACHE_KEY)
   const [issues, setIssues] = useState(cached || [])
-  // Only show a loading state when there's nothing cached to show yet —
-  // otherwise the cached list renders immediately and refreshes silently.
   const [loading, setLoading] = useState(!cached)
   const [error, setError] = useState('')
 
   const refresh = useCallback(async () => {
+    setLoading(true)
     try {
       const data = await getPublishedDigestIssues()
       setIssues(data)
@@ -26,6 +25,9 @@ export function usePublicDigests() {
   }, [])
 
   useEffect(() => {
+    // A valid (non-expired) cache means no Supabase call at all — not just
+    // a hidden loading spinner while quietly re-fetching in the background.
+    if (getCached(CACHE_KEY)) return
     void refresh()
   }, [refresh])
 

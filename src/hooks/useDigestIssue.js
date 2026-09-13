@@ -13,8 +13,17 @@ export function useDigestIssue(id) {
     let active = true
     const key = `issue-${id}`
     const cachedForId = getCached(key)
-    setIssue(cachedForId || null)
-    setLoading(!cachedForId)
+
+    // A valid (non-expired) cache means no Supabase call at all.
+    if (cachedForId) {
+      setIssue(cachedForId)
+      setLoading(false)
+      setError('')
+      return
+    }
+
+    setIssue(null)
+    setLoading(true)
     setError('')
 
     getPublishedDigestIssue(id)
