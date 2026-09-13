@@ -1,17 +1,25 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { signUp, logIn, logOut, updateProfile, loadAccount, clearAuthCache } from '../lib/auth'
+import { getCachedAccount } from '../lib/accountCache'
 import { supabase } from '../lib/supabase'
 const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  // A cached account renders immediately (no "Loading your account…" flash)
+  // — loadAccount() below still verifies it against the real session once
+  // that resolves, and only refetches for real if it doesn't match or the
+  // cache has expired.
+  const initialCached = getCachedAccount()
+  const [user, setUser] = useState(initialCached?.currentUser || null)
+  const [loading, setLoading] = useState(!initialCached)
   const [authError, setAuthError] = useState('')
   const generation = useRef(0)
   useEffect(() => {
     let active = true
     const sync = async session => {
       const request = ++generation.current
-      setLoading(true)
+      const cached = getCachedAccount()
+      const cacheMatchesSession = cached && session?.user?.email && cached.currentUser?.email?.toLowerCase() === session.user.email.toLowerCase()
+      if (!cacheMatchesSession) setLoading(true)
       try {
         const account = await loadAccount(session?.user)
         if (active && request === generation.current) { setUser(account); setAuthError('') }

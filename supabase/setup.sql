@@ -77,12 +77,22 @@ create table if not exists public.ba_digest_issues (
   source_url text,
   raw_import text,
   body text,
+  teaser_image text,
   published boolean not null default false,
   created_at timestamptz not null default now()
 );
--- Safe to re-run: adds the column if this table already existed from an
--- earlier version of this script (before full-article import existed).
+-- Safe to re-run: adds the columns if this table already existed from an
+-- earlier version of this script (before full-article import / images existed).
 alter table public.ba_digest_issues add column if not exists body text;
+alter table public.ba_digest_issues add column if not exists teaser_image text;
+
+-- Storage bucket for digest images (teaser images + any images pasted into
+-- an article body). Public bucket: anyone can view an image by URL, but
+-- only the admin can upload/replace/delete — enforced below via RLS on
+-- storage.objects, same pattern as everything else in this file.
+insert into storage.buckets (id, name, public)
+values ('digest-images', 'digest-images', true)
+on conflict (id) do nothing;
 
 create index if not exists ba_projects_owner on public.ba_projects(owner_id);
 create index if not exists ba_checkins_session on public.ba_checkins(session_id);
@@ -185,8 +195,18 @@ create policy ba_responses_edit on public.ba_responses for update to authenticat
     select 1 from public.ba_checkins c where c.id = checkin_id and c.ended_at is null
   ));
 
+-- Split by role (rather than one "anon, authenticated" policy) because
+-- ba_is_admin() has execute revoked from anon — even wrapped in an OR that
+-- would never need it for a logged-out visitor, Postgres still checks
+-- execute permission before it can evaluate the policy, so anon would get
+-- a hard "permission denied for function" error instead of just seeing
+-- published rows. Keeping anon's policy free of that function avoids it.
 drop policy if exists ba_digest_issues_read on public.ba_digest_issues;
-create policy ba_digest_issues_read on public.ba_digest_issues for select to anon, authenticated
+drop policy if exists ba_digest_issues_read_anon on public.ba_digest_issues;
+create policy ba_digest_issues_read_anon on public.ba_digest_issues for select to anon
+  using (published = true);
+drop policy if exists ba_digest_issues_read_authenticated on public.ba_digest_issues;
+create policy ba_digest_issues_read_authenticated on public.ba_digest_issues for select to authenticated
   using (published = true or (select public.ba_is_admin()));
 drop policy if exists ba_digest_issues_create on public.ba_digest_issues;
 create policy ba_digest_issues_create on public.ba_digest_issues for insert to authenticated
@@ -197,6 +217,19 @@ create policy ba_digest_issues_edit on public.ba_digest_issues for update to aut
 drop policy if exists ba_digest_issues_delete on public.ba_digest_issues;
 create policy ba_digest_issues_delete on public.ba_digest_issues for delete to authenticated
   using ((select public.ba_is_admin()));
+
+drop policy if exists ba_digest_images_read on storage.objects;
+create policy ba_digest_images_read on storage.objects for select to anon, authenticated
+  using (bucket_id = 'digest-images');
+drop policy if exists ba_digest_images_write on storage.objects;
+create policy ba_digest_images_write on storage.objects for insert to authenticated
+  with check (bucket_id = 'digest-images' and (select public.ba_is_admin()));
+drop policy if exists ba_digest_images_update on storage.objects;
+create policy ba_digest_images_update on storage.objects for update to authenticated
+  using (bucket_id = 'digest-images' and (select public.ba_is_admin()));
+drop policy if exists ba_digest_images_delete on storage.objects;
+create policy ba_digest_images_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'digest-images' and (select public.ba_is_admin()));
 
 commit;
 

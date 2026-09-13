@@ -21,6 +21,7 @@ function shape(row) {
     sourceUrl: row.source_url,
     rawImport: row.raw_import,
     body: row.body || '',
+    teaserImage: row.teaser_image || '',
     published: row.published,
   }
 }
@@ -38,6 +39,7 @@ function toRow(fields) {
   if ('sourceUrl' in fields) row.source_url = fields.sourceUrl
   if ('rawImport' in fields) row.raw_import = fields.rawImport
   if ('body' in fields) row.body = fields.body
+  if ('teaserImage' in fields) row.teaser_image = fields.teaserImage
   if ('published' in fields) row.published = fields.published
   return row
 }

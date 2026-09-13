@@ -7,7 +7,7 @@ function formatDate(date) {
 
 // Shows the same published issues as the public /digest pages — members
 // see them here without leaving the portal, and "Read issue" opens the
-// full article (public page, so it also works if they share the link).
+// article at /portal/digest/:id, staying inside the portal layout.
 export default function Digest() {
   const { issues, loading, error } = usePublicDigests()
 
@@ -31,15 +31,18 @@ export default function Digest() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {issues.map((issue) => (
-            <div key={issue.id} className="glass-card rounded-2xl p-5 flex flex-col">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-soft/60 mb-2">
-                Issue {String(issue.issueNumber).padStart(2, '0')} · {formatDate(issue.date)}
-              </p>
-              <p className="text-[14px] font-semibold text-ink leading-snug mb-1.5">{issue.headline}</p>
-              <p className="text-[13px] text-ink-soft leading-relaxed flex-1">{issue.teaser}</p>
-              <Link to={`/digest/${issue.id}`} className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent-blue">
-                Read issue <span aria-hidden="true">&rarr;</span>
-              </Link>
+            <div key={issue.id} className="glass-card rounded-2xl overflow-hidden flex flex-col">
+              {issue.teaserImage && <img src={issue.teaserImage} alt="" className="w-full h-32 object-cover" />}
+              <div className="p-5 flex flex-col flex-1">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-soft/60 mb-2">
+                  Issue {String(issue.issueNumber).padStart(2, '0')} · {formatDate(issue.date)}
+                </p>
+                <p className="text-[14px] font-semibold text-ink leading-snug mb-1.5">{issue.headline}</p>
+                {!issue.teaserImage && <p className="text-[13px] text-ink-soft leading-relaxed flex-1">{issue.teaser}</p>}
+                <Link to={`/portal/digest/${issue.id}`} className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent-blue">
+                  Read issue <span aria-hidden="true">&rarr;</span>
+                </Link>
+              </div>
             </div>
           ))}
         </div>
