@@ -195,8 +195,18 @@ create policy ba_responses_edit on public.ba_responses for update to authenticat
     select 1 from public.ba_checkins c where c.id = checkin_id and c.ended_at is null
   ));
 
+-- Split by role (rather than one "anon, authenticated" policy) because
+-- ba_is_admin() has execute revoked from anon — even wrapped in an OR that
+-- would never need it for a logged-out visitor, Postgres still checks
+-- execute permission before it can evaluate the policy, so anon would get
+-- a hard "permission denied for function" error instead of just seeing
+-- published rows. Keeping anon's policy free of that function avoids it.
 drop policy if exists ba_digest_issues_read on public.ba_digest_issues;
-create policy ba_digest_issues_read on public.ba_digest_issues for select to anon, authenticated
+drop policy if exists ba_digest_issues_read_anon on public.ba_digest_issues;
+create policy ba_digest_issues_read_anon on public.ba_digest_issues for select to anon
+  using (published = true);
+drop policy if exists ba_digest_issues_read_authenticated on public.ba_digest_issues;
+create policy ba_digest_issues_read_authenticated on public.ba_digest_issues for select to authenticated
   using (published = true or (select public.ba_is_admin()));
 drop policy if exists ba_digest_issues_create on public.ba_digest_issues;
 create policy ba_digest_issues_create on public.ba_digest_issues for insert to authenticated

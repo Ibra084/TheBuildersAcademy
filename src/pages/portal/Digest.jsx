@@ -7,7 +7,7 @@ function formatDate(date) {
 
 // Shows the same published issues as the public /digest pages — members
 // see them here without leaving the portal, and "Read issue" opens the
-// full article (public page, so it also works if they share the link).
+// article at /portal/digest/:id, staying inside the portal layout.
 export default function Digest() {
   const { issues, loading, error } = usePublicDigests()
 
@@ -39,7 +39,7 @@ export default function Digest() {
                 </p>
                 <p className="text-[14px] font-semibold text-ink leading-snug mb-1.5">{issue.headline}</p>
                 {!issue.teaserImage && <p className="text-[13px] text-ink-soft leading-relaxed flex-1">{issue.teaser}</p>}
-                <Link to={`/digest/${issue.id}`} className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent-blue">
+                <Link to={`/portal/digest/${issue.id}`} className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent-blue">
                   Read issue <span aria-hidden="true">&rarr;</span>
                 </Link>
               </div>
