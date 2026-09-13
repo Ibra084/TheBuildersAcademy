@@ -28,3 +28,19 @@ export function setCached(key, data) {
     // Caching is a nice-to-have — ignore quota/availability issues.
   }
 }
+
+// Wipes every cached digest entry (the list, and every individual issue).
+// Call this after any admin write (create/update/publish/delete) — without
+// it, the landing page and portal would keep serving whatever was cached
+// before the edit for up to the full TTL.
+export function clearAllDigestCache() {
+  try {
+    const prefix = 'builders_digest_cache_'
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith(prefix)) localStorage.removeItem(key)
+    }
+  } catch {
+    // Ignore.
+  }
+}
