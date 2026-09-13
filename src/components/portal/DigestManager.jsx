@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getAllDigestIssuesForAdmin, createDigestIssue, updateDigestIssue, deleteDigestIssue } from '../../lib/publicDigests'
 import { fetchArticleContent } from '../../lib/mediumImport'
+import { uploadDigestImage } from '../../lib/digestImages'
 
 const inputClass =
   'w-full rounded-xl bg-white/80 border border-black/[0.08] px-4 py-2.5 text-[14px] text-ink placeholder:text-ink-soft/50 outline-none focus:ring-2 focus:ring-accent-blue/40 transition-shadow'
@@ -145,6 +146,9 @@ function IssueEditor({ issue, expanded, onToggle, onSaved, onDeleted }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [uploadingTeaser, setUploadingTeaser] = useState(false)
+  const [uploadingBodyImage, setUploadingBodyImage] = useState(false)
+  const bodyRef = useRef(null)
 
   useEffect(() => {
     setForm(issue)
@@ -157,6 +161,46 @@ function IssueEditor({ issue, expanded, onToggle, onSaved, onDeleted }) {
       aiNews: prev.aiNews.map((item, i) => (i === index ? { ...item, ...patch } : item)),
     }))
 
+  const handleTeaserImageChange = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setUploadingTeaser(true)
+    setError('')
+    try {
+      const url = await uploadDigestImage(file)
+      update({ teaserImage: url })
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setUploadingTeaser(false)
+    }
+  }
+
+  // Inserts uploaded-image Markdown at the cursor position in the body
+  // textarea — this is the manual fix for images Medium's import misses
+  // (it can only catch images the reader service actually extracted).
+  const handleBodyImageChange = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setUploadingBodyImage(true)
+    setError('')
+    try {
+      const url = await uploadDigestImage(file)
+      const textarea = bodyRef.current
+      const current = form.body || ''
+      const cursor = textarea ? textarea.selectionStart : current.length
+      const markdown = `![](${url})`
+      const next = `${current.slice(0, cursor)}\n\n${markdown}\n\n${current.slice(cursor)}`
+      update({ body: next })
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setUploadingBodyImage(false)
+    }
+  }
+
   const handleSave = async (publishOverride) => {
     setSaving(true)
     setError('')
@@ -167,6 +211,7 @@ function IssueEditor({ issue, expanded, onToggle, onSaved, onDeleted }) {
         date: form.date,
         headline: form.headline,
         teaser: form.teaser,
+        teaserImage: form.teaserImage,
         body: form.body,
         aiNews: form.aiNews,
         buildSomething: form.buildSomething,
@@ -248,16 +293,57 @@ function IssueEditor({ issue, expanded, onToggle, onSaved, onDeleted }) {
             />
           </label>
 
-          <label className="block text-sm font-medium text-ink">
-            Full article body (Markdown)
+          <div>
+            <p className="text-sm font-medium text-ink mb-2">Teaser image</p>
+            <p className="text-[12px] text-ink-soft/70 mb-2">
+              Shown on cards instead of the text teaser above when set.
+            </p>
+            {form.teaserImage ? (
+              <div className="relative inline-block">
+                <img src={form.teaserImage} alt="" className="rounded-xl max-h-40 w-auto" />
+                <button
+                  type="button"
+                  onClick={() => update({ teaserImage: '' })}
+                  className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-ink text-white text-[13px] font-semibold flex items-center justify-center"
+                  aria-label="Remove teaser image"
+                >
+                  &times;
+                </button>
+              </div>
+            ) : (
+              <label className="inline-flex items-center gap-2 text-[13px] font-medium text-ink cursor-pointer rounded-xl bg-black/[0.05] hover:bg-black/[0.08] transition-colors px-4 py-2.5">
+                {uploadingTeaser ? 'Uploading…' : 'Upload image'}
+                <input type="file" accept="image/*" onChange={handleTeaserImageChange} disabled={uploadingTeaser} className="hidden" />
+              </label>
+            )}
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between gap-3 mb-1.5">
+              <label htmlFor={`body-${issue.id}`} className="text-sm font-medium text-ink">
+                Full article body (Markdown)
+              </label>
+              <label className="shrink-0 inline-flex items-center gap-1.5 text-[12px] font-semibold text-accent-blue cursor-pointer">
+                {uploadingBodyImage ? 'Uploading…' : '+ Insert image'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBodyImageChange}
+                  disabled={uploadingBodyImage}
+                  className="hidden"
+                />
+              </label>
+            </div>
             <textarea
+              id={`body-${issue.id}`}
+              ref={bodyRef}
               rows={16}
               value={form.body || ''}
               onChange={(e) => update({ body: e.target.value })}
-              placeholder="Paste or write the full article here. When this is filled in, it's what actually renders on the public page — the sections below are only used when this is left empty."
-              className={`${inputClass} mt-1.5 font-mono text-[13px] resize-y`}
+              placeholder="Paste or write the full article here. When this is filled in, it's what actually renders on the public page — the sections below are only used when this is left empty. Missing an image from the Medium import? Click your cursor where you want it and use 'Insert image' above."
+              className={`${inputClass} font-mono text-[13px] resize-y`}
             />
-          </label>
+          </div>
           {form.sourceUrl && (
             <p className="text-[12px] text-ink-soft/70">
               Imported from{' '}

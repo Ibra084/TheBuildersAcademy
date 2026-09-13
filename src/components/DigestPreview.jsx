@@ -53,19 +53,26 @@ export default function DigestPreview() {
             {issues.map((issue) => (
               <div
                 key={issue.id}
-                className="reveal-digest-card glass-card rounded-3xl p-7 flex flex-col transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_30px_60px_-20px_rgba(54,109,204,0.25)]"
+                className="reveal-digest-card glass-card rounded-3xl overflow-hidden flex flex-col transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_30px_60px_-20px_rgba(54,109,204,0.25)]"
               >
-                <p className="eyebrow text-accent-blue mb-4">
-                  Issue {String(issue.issueNumber).padStart(2, '0')} · {formatDate(issue.date)}
-                </p>
-                <h3 className="text-lg font-bold tracking-tight text-ink mb-2.5">{issue.headline}</h3>
-                <p className="text-[14px] leading-relaxed text-ink-soft flex-1">{issue.teaser}</p>
-                <Link
-                  to={`/digest/${issue.id}`}
-                  className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold text-accent-blue"
-                >
-                  Read issue <span aria-hidden="true">&rarr;</span>
-                </Link>
+                {issue.teaserImage && (
+                  <img src={issue.teaserImage} alt="" className="w-full h-40 object-cover" />
+                )}
+                <div className="p-7 flex flex-col flex-1">
+                  <p className="eyebrow text-accent-blue mb-4">
+                    Issue {String(issue.issueNumber).padStart(2, '0')} · {formatDate(issue.date)}
+                  </p>
+                  <h3 className="text-lg font-bold tracking-tight text-ink mb-2.5">{issue.headline}</h3>
+                  {!issue.teaserImage && (
+                    <p className="text-[14px] leading-relaxed text-ink-soft flex-1">{issue.teaser}</p>
+                  )}
+                  <Link
+                    to={`/digest/${issue.id}`}
+                    className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold text-accent-blue"
+                  >
+                    Read issue <span aria-hidden="true">&rarr;</span>
+                  </Link>
+                </div>
               </div>
             ))}
           </div>

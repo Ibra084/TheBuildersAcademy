@@ -39,16 +39,21 @@ export default function DigestArchive() {
                 <Link
                   key={issue.id}
                   to={`/digest/${issue.id}`}
-                  className="glass-card block rounded-3xl p-6 sm:p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_60px_-20px_rgba(54,109,204,0.25)]"
+                  className="glass-card flex flex-col sm:flex-row gap-5 items-start rounded-3xl p-6 sm:p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_60px_-20px_rgba(54,109,204,0.25)]"
                 >
-                  <p className="eyebrow text-accent-blue mb-3">
-                    Issue {String(issue.issueNumber).padStart(2, '0')} · {formatDate(issue.date)}
-                  </p>
-                  <h2 className="text-xl font-bold tracking-tight text-ink mb-2">{issue.headline}</h2>
-                  <p className="text-[15px] leading-relaxed text-ink-soft">{issue.teaser}</p>
-                  <span className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-accent-blue">
-                    Read <span aria-hidden="true">&rarr;</span>
-                  </span>
+                  {issue.teaserImage && (
+                    <img src={issue.teaserImage} alt="" className="w-full sm:w-40 h-32 rounded-2xl object-cover shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="eyebrow text-accent-blue mb-3">
+                      Issue {String(issue.issueNumber).padStart(2, '0')} · {formatDate(issue.date)}
+                    </p>
+                    <h2 className="text-xl font-bold tracking-tight text-ink mb-2">{issue.headline}</h2>
+                    {!issue.teaserImage && <p className="text-[15px] leading-relaxed text-ink-soft">{issue.teaser}</p>}
+                    <span className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-accent-blue">
+                      Read <span aria-hidden="true">&rarr;</span>
+                    </span>
+                  </div>
                 </Link>
               ))}
             </div>

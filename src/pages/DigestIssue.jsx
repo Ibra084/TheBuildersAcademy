@@ -84,6 +84,10 @@ export default function DigestIssue() {
           </p>
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-ink leading-[1.15]">{issue.headline}</h1>
 
+          {issue.teaserImage && (
+            <img src={issue.teaserImage} alt="" className="w-full rounded-3xl mt-8 object-cover max-h-[420px]" />
+          )}
+
           <hr className="my-8 border-t border-ink/10" />
 
           {issue.sourceUrl && (
