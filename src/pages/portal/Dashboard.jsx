@@ -188,7 +188,7 @@ export default function Dashboard() {
           </div>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-soft/60 mb-1.5">Building</p>
           <p className="text-[14px] text-ink-soft leading-relaxed">
-            {user?.whatBuilding || 'You haven’t said what you’re building yet.'}
+            {user?.whatBuilding || 'What are you building? Tell the community.'}
           </p>
           <Link to="/portal/profile" className="mt-4 inline-block text-[13px] font-semibold text-accent-blue">
             Edit profile

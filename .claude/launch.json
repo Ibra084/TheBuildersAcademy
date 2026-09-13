@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "the-builders-dev",
-      "runtimeExecutable": "C:\\Users\\ibrah\\Downloads\\the builders academy\\dev.cmd",
-      "runtimeArgs": [],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
       "port": 5173
     }
   ]

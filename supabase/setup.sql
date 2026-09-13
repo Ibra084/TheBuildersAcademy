@@ -59,9 +59,35 @@ create table if not exists public.ba_responses (
   primary key (checkin_id, user_id)
 );
 
+-- Public Weekly Digest: fully separate from the member portal's own
+-- digest (ba_content kind='digests'). Unlike every other table here,
+-- published issues are readable by anon (logged-out) visitors, since this
+-- is the public-facing digest on the landing site. Only the owner/admin
+-- can create, edit, publish, or delete an issue.
+create table if not exists public.ba_digest_issues (
+  id uuid primary key default gen_random_uuid(),
+  issue_number integer not null default 1,
+  date date not null default current_date,
+  headline text not null default '',
+  teaser text not null default '',
+  ai_news jsonb not null default '[]'::jsonb,
+  build_something jsonb not null default '{}'::jsonb,
+  resource_of_week jsonb not null default '{}'::jsonb,
+  community_update text not null default '',
+  source_url text,
+  raw_import text,
+  body text,
+  published boolean not null default false,
+  created_at timestamptz not null default now()
+);
+-- Safe to re-run: adds the column if this table already existed from an
+-- earlier version of this script (before full-article import existed).
+alter table public.ba_digest_issues add column if not exists body text;
+
 create index if not exists ba_projects_owner on public.ba_projects(owner_id);
 create index if not exists ba_checkins_session on public.ba_checkins(session_id);
 create index if not exists ba_responses_user on public.ba_responses(user_id);
+create index if not exists ba_digest_issues_published on public.ba_digest_issues(published, date desc);
 
 -- Profile metadata is separate from authorization: members cannot set an admin flag.
 create or replace function public.ba_create_profile()
@@ -93,13 +119,16 @@ alter table public.ba_content enable row level security;
 alter table public.ba_projects enable row level security;
 alter table public.ba_checkins enable row level security;
 alter table public.ba_responses enable row level security;
+alter table public.ba_digest_issues enable row level security;
 
 revoke all on public.ba_profiles, public.ba_content, public.ba_projects,
-  public.ba_checkins, public.ba_responses from anon, authenticated;
+  public.ba_checkins, public.ba_responses, public.ba_digest_issues from anon, authenticated;
 grant select on public.ba_profiles to authenticated;
 grant update (name, year, what_building, photo) on public.ba_profiles to authenticated;
 grant select, insert, update on public.ba_content, public.ba_projects,
   public.ba_checkins, public.ba_responses to authenticated;
+grant select on public.ba_digest_issues to anon, authenticated;
+grant insert, update, delete on public.ba_digest_issues to authenticated;
 
 -- Named policies are replaced so this script can be rerun safely.
 drop policy if exists ba_profiles_read on public.ba_profiles;
@@ -155,6 +184,19 @@ create policy ba_responses_edit on public.ba_responses for update to authenticat
   with check (user_id = (select auth.uid()) and exists (
     select 1 from public.ba_checkins c where c.id = checkin_id and c.ended_at is null
   ));
+
+drop policy if exists ba_digest_issues_read on public.ba_digest_issues;
+create policy ba_digest_issues_read on public.ba_digest_issues for select to anon, authenticated
+  using (published = true or (select public.ba_is_admin()));
+drop policy if exists ba_digest_issues_create on public.ba_digest_issues;
+create policy ba_digest_issues_create on public.ba_digest_issues for insert to authenticated
+  with check ((select public.ba_is_admin()));
+drop policy if exists ba_digest_issues_edit on public.ba_digest_issues;
+create policy ba_digest_issues_edit on public.ba_digest_issues for update to authenticated
+  using ((select public.ba_is_admin())) with check ((select public.ba_is_admin()));
+drop policy if exists ba_digest_issues_delete on public.ba_digest_issues;
+create policy ba_digest_issues_delete on public.ba_digest_issues for delete to authenticated
+  using ((select public.ba_is_admin()));
 
 commit;
 
