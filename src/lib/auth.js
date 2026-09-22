@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
-import { getCachedAccount, setCachedAccount, clearCachedAccount } from './accountCache'
+import { buildersApi } from './buildersApi'
+import { clearCachedAccount } from './accountCache'
 let currentUser = null
 let members = []
 export function getCurrentUser() { return currentUser }
@@ -9,33 +10,34 @@ const profileShape = p => ({ ...p, whatBuilding: p.what_building || '' })
 export async function loadAccount(authUser) {
   if (!authUser) { clearAuthCache(); return null }
 
-  const cached = getCachedAccount()
-  if (cached && cached.currentUser?.email?.toLowerCase() === authUser.email?.toLowerCase()) {
-    currentUser = cached.currentUser
-    members = cached.members
-    return currentUser
-  }
-
   const [profile, role, directory] = await Promise.all([
-    supabase.from('ba_profiles').select('*').eq('id', authUser.id).single(),
+    supabase.rpc('ba_my_account').single(),
     supabase.rpc('ba_is_admin'),
-    supabase.from('ba_profiles').select('*').order('created_at'),
+    supabase.from('ba_profiles').select('id,name,year,what_building,photo,created_at,updated_at,display_name').order('created_at'),
   ])
   for (const result of [profile, role, directory]) if (result.error) throw new Error(result.error.message)
   members = directory.data.map(profileShape)
-  currentUser = { ...profileShape(profile.data), email: authUser.email, isAdmin: role.data === true }
-  setCachedAccount({ currentUser, members })
+  currentUser = { ...profileShape(profile.data), email: profile.data.auth_type === 'builders_id' ? null : authUser.email, isAdmin: role.data === true }
+  clearCachedAccount()
   return currentUser
 }
-export async function signUp({ name, year, email, password, whatBuilding = '' }) {
+export async function signUp({ name, year, email, password, whatBuilding = '', privacyAccepted = false }) {
+  if (!privacyAccepted) throw new Error('Read and accept the Privacy Notice.')
+  if (/(?:\.sch\.|\.edu(?:\.|$)|\.ac\.|\.invalid$)/i.test(email)) throw new Error('Use a personal email address, or ask an administrator for a Builders ID.')
   const { data, error } = await supabase.auth.signUp({
     email: email.trim(), password,
-    options: { data: { name: name.trim(), year, whatBuilding }, emailRedirectTo: window.location.origin + '/portal' },
+    options: { data: { name: name.trim(), year, whatBuilding, privacy_notice_version: '1.0' }, emailRedirectTo: window.location.origin + '/portal' },
   })
   if (error) throw error
   return data
 }
-export async function logIn({ email, password }) {
+export async function logIn({ email, password, builders_id, method = 'email' }) {
+  if (method === 'builders_id') {
+    const result = await buildersApi('login', { builders_id, password })
+    const { data, error } = await supabase.auth.setSession(result.session)
+    if (error) throw error
+    return data
+  }
   const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
   if (error) throw error
   return data

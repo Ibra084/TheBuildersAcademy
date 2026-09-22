@@ -9,7 +9,8 @@ const inputClass =
 export default function Login() {
   const navigate = useNavigate()
   const { login, user, loading } = useAuth()
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [method, setMethod] = useState('email')
+  const [form, setForm] = useState({ email: '', builders_id: '', password: '' })
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -20,7 +21,7 @@ export default function Login() {
     setError('')
     setSubmitting(true)
     try {
-      await login({ email: form.email, password: form.password })
+      await login({ ...form, method })
       navigate('/portal')
     } catch (err) {
       setError(err.message)
@@ -44,31 +45,33 @@ export default function Login() {
         </>
       }
     >
-      <p className="mb-4 text-xs text-ink-soft">Previously signed up on this device? Create your account once more to enable secure sign-in across devices.</p>
+      <fieldset className="mb-5"><legend className="text-sm font-semibold mb-2">How do you sign in?</legend><div className="grid grid-cols-2 gap-2">{[['email','Personal Email'],['builders_id','Builders ID']].map(([value,label])=><button key={value} type="button" aria-pressed={method===value} onClick={()=>{setMethod(value);setError('')}} className={`rounded-xl p-3 text-sm border ${method===value?'bg-ink text-white':'bg-white border-black/10'}`}>{label}</button>)}</div></fieldset>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-ink mb-2">
-            Email address
+            {method === 'email' ? 'Personal email' : 'Builders ID'}
           </label>
           <input
             id="email"
-            type="email"
+            type={method === 'email' ? 'email' : 'text'}
             required
-            value={form.email}
-            onChange={handleChange('email')}
-            placeholder="you@example.com"
+            value={method === 'email' ? form.email : form.builders_id}
+            onChange={handleChange(method === 'email' ? 'email' : 'builders_id')}
+            placeholder={method === 'email' ? 'you@example.com' : 'BLD-7K2F9'}
+            autoComplete="username"
             className={inputClass}
           />
         </div>
 
+        {method === 'builders_id' && <p className="text-xs text-ink-soft">Your Builders ID looks like BLD-7K2F9.</p>}
         <div>
           <div className="flex items-center justify-between mb-2">
             <label htmlFor="password" className="block text-sm font-medium text-ink">
               Password
             </label>
-            <a href="#" className="text-[13px] font-medium text-accent-blue hover:text-accent-blue-dark">
-              Forgot password?
-            </a>
+            <Link to={`/forgot-password?method=${method}`} className="text-[13px] font-medium text-accent-blue hover:text-accent-blue-dark">
+              {method === 'builders_id' ? 'Forgot your Builders ID password?' : 'Forgot password?'}
+            </Link>
           </div>
           <input
             id="password"
@@ -91,11 +94,7 @@ export default function Login() {
           {submitting ? 'Logging in…' : 'Log in'}
         </button>
       </form>
+      {method === 'builders_id' && <Link className="block mt-5 text-sm underline" to="/account/setup?method=builders_id">First time? Set up / recover account</Link>}
     </AuthLayout>
   )
 }
-
-
-
-
-

@@ -3,6 +3,9 @@ import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import Landing from './pages/Landing'
+import Privacy from './pages/Privacy'
+import AccountSetup from './pages/AccountSetup'
+import ForgotPassword from './pages/ForgotPassword'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import DigestArchive from './pages/DigestArchive'
@@ -25,6 +28,9 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/account/setup" element={<AccountSetup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/digest" element={<DigestArchive />} />
           <Route path="/digest/:id" element={<DigestIssue />} />
