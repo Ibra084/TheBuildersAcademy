@@ -3,6 +3,7 @@ import { getAllUsers, getInitials } from '../../lib/auth'
 import { useAuth } from '../../context/AuthContext'
 import { useSessions } from '../../hooks/useSessions'
 import CreateSession from '../../components/portal/CreateSession'
+import StudentAccounts from '../../components/portal/StudentAccounts'
 import DigestManager from '../../components/portal/DigestManager'
 import { useCheckIns, startCheckIn, endCheckIn } from '../../lib/checkin'
 
@@ -51,6 +52,7 @@ export default function Admin() {
 
       {(actionError || checkInError) && <p role="alert" className="text-sm text-red-600">{actionError || checkInError}</p>}
 
+      <StudentAccounts />
       <DigestManager />
 
       <CreateSession onCreated={session => setSelectedSessionId(session.id)} />
@@ -166,7 +168,3 @@ export default function Admin() {
     </div>
   )
 }
-
-
-
-

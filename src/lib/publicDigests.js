@@ -6,6 +6,7 @@
 // (it's additive/safe to re-run). Only the owner/admin can create, edit,
 // publish, or delete issues — enforced by Postgres RLS, not just the UI.
 import { supabase } from './supabase'
+import { clearAllDigestCache } from './digestCache'
 
 function shape(row) {
   return {
@@ -78,16 +79,19 @@ export async function getAllDigestIssuesForAdmin() {
 export async function createDigestIssue(fields) {
   const { data, error } = await supabase.from('ba_digest_issues').insert(toRow(fields)).select('*').single()
   if (error) throw error
+  clearAllDigestCache()
   return shape(data)
 }
 
 export async function updateDigestIssue(id, fields) {
   const { data, error } = await supabase.from('ba_digest_issues').update(toRow(fields)).eq('id', id).select('*').single()
   if (error) throw error
+  clearAllDigestCache()
   return shape(data)
 }
 
 export async function deleteDigestIssue(id) {
   const { error } = await supabase.from('ba_digest_issues').delete().eq('id', id)
   if (error) throw error
+  clearAllDigestCache()
 }

@@ -7,6 +7,6 @@ import App from './App.jsx'
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
-    <Analytics />
+    <Analytics beforeSend={event => /\/(login|signup|account|forgot-password|portal|privacy)(\/|$)/.test(new URL(event.url).pathname) ? null : event} />
   </StrictMode>,
 )

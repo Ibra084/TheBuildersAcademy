@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import PrivacyNotice from '../components/auth/PrivacyNotice'
 import AuthLayout from '../components/auth/AuthLayout'
 import { useAuth } from '../context/AuthContext'
 
@@ -11,7 +12,7 @@ const YEAR_GROUPS = ['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13']
 export default function Signup() {
   const navigate = useNavigate()
   const { signup } = useAuth()
-  const [form, setForm] = useState({ name: '', year: '', email: '', password: '', whatBuilding: '' })
+  const [form, setForm] = useState({ name: '', year: '', email: '', password: '', whatBuilding: '', privacyAccepted: false })
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -46,6 +47,7 @@ export default function Signup() {
         </>
       }
     >
+      <p className="mb-4 text-sm text-ink-soft">No personal email? Ask an administrator for a Builders ID. <Link to="/account/setup?method=builders_id" className="underline">I have a setup code</Link></p>
       <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-ink mb-1">
@@ -86,7 +88,7 @@ export default function Signup() {
 
         <div className="sm:col-span-2">
           <label htmlFor="email" className="block text-sm font-medium text-ink mb-1">
-            Email address
+            Personal email
           </label>
           <input
             id="email"
@@ -129,6 +131,7 @@ export default function Signup() {
           />
         </div>
 
+<div className="sm:col-span-2"><PrivacyNotice /></div><label className="sm:col-span-2 flex gap-2 text-xs items-start"><input type="checkbox" required checked={form.privacyAccepted} onChange={e=>setForm({...form,privacyAccepted:e.target.checked})}/><span>I have read the <Link target="_blank" to="/privacy" className="underline">Privacy Notice</Link>. I am using a personal email, not a school email.</span></label>
         {message && <p role="status" className="sm:col-span-2 text-sm text-accent-teal">{message}</p>}
         {error && <p className="sm:col-span-2 text-sm text-red-500">{error}</p>}
 
@@ -143,7 +146,3 @@ export default function Signup() {
     </AuthLayout>
   )
 }
-
-
-
-
