@@ -12,7 +12,25 @@ export function normalizeId(value) {
 export function generateId() { return 'BLD-' + Array.from({ length: 5 }, () => ALPHABET[randomInt(ALPHABET.length)]).join('') }
 export function generateCode() { return Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => ALPHABET[randomInt(ALPHABET.length)]).join('')).join('-') }
 export function codeHash(code, pepper) { return createHmac('sha256', pepper).update(String(code || '').toUpperCase().replace(/[\s-]/g, '')).digest('hex') }
-export function secretPassword() { return randomBytes(48).toString('base64url') }
+// This password is never seen or typed by anyone — it's immediately
+// overwritten once the student consumes their setup code. It only needs to
+// satisfy Supabase's own password policy on creation, so it explicitly
+// guarantees a character from every common required class (a base64url
+// string alone can fail a policy that requires a symbol, since "-"/"_"
+// aren't always accepted as one) rather than assuming what that policy is.
+export function secretPassword() {
+  const symbols = '!@#$%^&*()-_=+'
+  const pick = (chars) => chars[randomInt(chars.length)]
+  const required = [pick('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), pick('abcdefghijklmnopqrstuvwxyz'), pick('0123456789'), pick(symbols)]
+  const filler = randomBytes(40).toString('base64url')
+  const combined = [...required, ...filler]
+  // Fisher-Yates shuffle so the required characters aren't predictably at the start.
+  for (let i = combined.length - 1; i > 0; i--) {
+    const j = randomInt(i + 1)
+    ;[combined[i], combined[j]] = [combined[j], combined[i]]
+  }
+  return combined.join('')
+}
 export function cleanName(value, field, optional = false) {
   if (typeof value !== 'string') throw new Fault(400, `${field} must be text.`)
   const text = value.normalize('NFC').trim().replace(/\s+/gu, ' ')

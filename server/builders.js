@@ -67,7 +67,15 @@ export function createController(s) {
         // The profile trigger records the user UUID against the import row atomically.
         const result = await s.db.auth.admin.createUser({ email: `${item.id}@builders.invalid`, password: secretPassword(), email_confirm: true,
           app_metadata: { auth_type: 'builders_id', builders_id: item.builders_id, import_item_id: item.id }, user_metadata: { ...item.student, name: item.student.display_name } })
-        if (result.error) throw new Fault(503, 'Account creation could not finish. Refresh the batch and retry this row.')
+        if (result.error) {
+          // Log server-side (Vercel function logs) and surface the real
+          // reason to the admin — this is an admin-only action, so the
+          // underlying Supabase error (e.g. a password policy rejection,
+          // or a misconfigured service role key) is safe and useful to show
+          // instead of a generic message that hides what to actually fix.
+          console.error('builders_id createUser failed:', result.error.status, result.error.message)
+          throw new Fault(503, `Account creation could not finish: ${result.error.message}`)
+        }
         userId = result.data.user.id
       }
       const code = generateCode()
