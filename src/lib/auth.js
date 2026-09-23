@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 import { buildersApi } from './buildersApi'
-import { clearCachedAccount } from './accountCache'
+import { getCachedAccount, setCachedAccount, clearCachedAccount } from './accountCache'
 let currentUser = null
 let members = []
 export function getCurrentUser() { return currentUser }
@@ -10,6 +10,13 @@ const profileShape = p => ({ ...p, whatBuilding: p.what_building || '' })
 export async function loadAccount(authUser) {
   if (!authUser) { clearAuthCache(); return null }
 
+  const cached = getCachedAccount()
+  if (cached && cached.currentUser?.id === authUser.id) {
+    currentUser = cached.currentUser
+    members = cached.members
+    return currentUser
+  }
+
   const [profile, role, directory] = await Promise.all([
     supabase.rpc('ba_my_account').single(),
     supabase.rpc('ba_is_admin'),
@@ -18,7 +25,11 @@ export async function loadAccount(authUser) {
   for (const result of [profile, role, directory]) if (result.error) throw new Error(result.error.message)
   members = directory.data.map(profileShape)
   currentUser = { ...profileShape(profile.data), email: profile.data.auth_type === 'builders_id' ? null : authUser.email, isAdmin: role.data === true }
-  clearCachedAccount()
+  // Don't cache a pending/disabled account — those routes redirect based on
+  // fresh status, and a stale "pending" cached across a real activation
+  // would incorrectly bounce an already-active user back to account setup.
+  if (currentUser.account_status === 'active') setCachedAccount({ currentUser, members })
+  else clearCachedAccount()
   return currentUser
 }
 export async function signUp({ name, year, email, password, whatBuilding = '', privacyAccepted = false }) {
