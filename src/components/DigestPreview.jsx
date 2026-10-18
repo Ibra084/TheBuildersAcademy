@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePublicDigests } from '../hooks/usePublicDigests'
+import { ArrowRight } from 'lucide-react'
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
@@ -29,12 +30,13 @@ export default function DigestPreview() {
   }
 
   return (
-    <section id="digest-preview" className="relative py-16 sm:py-24 px-6">
+    <section id="digest-preview" className="relative py-20 sm:py-28 px-6 bg-surface">
       <div className="max-w-6xl mx-auto">
         <div ref={headingRef} className="text-center mb-10 sm:mb-12">
-          <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-ink">This week in building.</h2>
+          <p className="text-[13px] font-semibold text-accent mb-3">Weekly digest</p>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-[1.1] text-ink">This week in building.</h2>
           <p className="mt-4 text-base text-ink-soft max-w-xl mx-auto">
-            A weekly roundup of what's happening in AI and technology — curated for student builders. Free, every Sunday.
+            A weekly roundup of what's happening in AI and technology. Out every Sunday.
           </p>
         </div>
 
@@ -53,7 +55,7 @@ export default function DigestPreview() {
             {issues.map((issue) => (
               <div
                 key={issue.id}
-                className="reveal-digest-card glass-card rounded-3xl overflow-hidden flex flex-col transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_30px_60px_-20px_rgba(54,109,204,0.25)]"
+                className="reveal-digest-card glass-card card-hover rounded-[18px] overflow-hidden flex flex-col"
               >
                 {issue.teaserImage && (
                   <img src={issue.teaserImage} alt="" className="w-full h-40 object-cover" />
@@ -70,7 +72,7 @@ export default function DigestPreview() {
                     to={`/digest/${issue.id}`}
                     className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold text-accent-blue"
                   >
-                    Read issue <span aria-hidden="true">&rarr;</span>
+                    Read issue <ArrowRight size={14} strokeWidth={2} aria-hidden="true" />
                   </Link>
                 </div>
               </div>
@@ -96,7 +98,7 @@ export default function DigestPreview() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               aria-label="Email address"
-              className="flex-1 rounded-xl bg-white/80 border border-black/[0.08] px-4 py-3 text-[14px] text-ink placeholder:text-ink-soft/50 outline-none focus:ring-2 focus:ring-accent-blue/40 transition-shadow"
+              className="flex-1 auth-input px-4 py-3 text-[14px]"
             />
             <button type="submit" className="solid-btn rounded-xl px-6 py-3 text-[14px] font-semibold text-white whitespace-nowrap">
               Subscribe
@@ -106,7 +108,7 @@ export default function DigestPreview() {
 
         <div className="text-center mt-8">
           <Link to="/digest" className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-ink hover:text-accent-blue transition-colors">
-            View all issues <span aria-hidden="true">&rarr;</span>
+            View all issues <ArrowRight size={14} strokeWidth={2} aria-hidden="true" />
           </Link>
         </div>
       </div>

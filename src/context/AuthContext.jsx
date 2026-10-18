@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { signUp, logIn, logOut, updateProfile, loadAccount, clearAuthCache } from '../lib/auth'
+import { createContext, startTransition, useContext, useEffect, useRef, useState } from 'react'
+import { signUp, logIn, logOut, updateProfile, loadAccount, clearAuthCache, changeTemporaryPassword } from '../lib/auth'
 import { getCachedAccount } from '../lib/accountCache'
 
 import { supabase } from '../lib/supabase'
@@ -38,7 +38,19 @@ export function AuthProvider({ children }) {
     user, loading, authError,
     signup: async data => { const result = await signUp(data); if (result.session) setLoading(true); return result },
     login: async data => { const result = await logIn(data); setLoading(true); return result },
-    logout: async () => { await logOut(); clearAuthCache(); setUser(null) },
+    // After the temporary password is replaced: the profile is now active, so reload it.
+    // `then` runs in the same render as the refreshed (now active) account.
+    changeTemporaryPassword: async (data, then) => {
+      await changeTemporaryPassword(data)
+      const { data: { session } } = await supabase.auth.getSession()
+      const account = await loadAccount(session?.user)
+      then?.()
+      setUser(account)
+    },
+    // Leave the portal before ending the session: `then` navigates, and React Router runs navigation in a
+    // transition, so clearing the user in the same transition commits both together. Otherwise the portal's
+    // route guard sees a signed-out user first and redirects to its own sign-in URL.
+    logout: async then => { clearAuthCache(); startTransition(() => { then?.(); setUser(null) }); await logOut() },
     updateProfile: async updates => { const updated = await updateProfile(user.email, updates); setUser(updated) },
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

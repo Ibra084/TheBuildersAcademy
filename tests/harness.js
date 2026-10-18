@@ -6,7 +6,7 @@ export async function database() {
   const pg = new PGlite()
   await pg.exec(`create role anon;create role authenticated;create role service_role bypassrls;
     create schema auth;create schema storage;
-    create table auth.users(id uuid primary key,email text unique,email_confirmed_at timestamptz,invited_at timestamptz,raw_user_meta_data jsonb default '{}',raw_app_meta_data jsonb default '{}');
+    create table auth.users(id uuid primary key,email text unique,email_confirmed_at timestamptz,invited_at timestamptz,raw_user_meta_data jsonb default '{}',raw_app_meta_data jsonb default '{}',last_sign_in_at timestamptz,created_at timestamptz default now());
     create table auth.sessions(id uuid primary key,user_id uuid references auth.users(id) on delete cascade);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb $$;
@@ -17,7 +17,12 @@ export async function database() {
   for(const [id,email,name] of [[owner,'14irahman@jess.sch.ae','Owner'],[student,'student@example.com','Existing Student']]) await pg.query('insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data) values($1,$2,now(),$3)',[id,email,JSON.stringify({name})])
   await pg.exec(await readFile(new URL('../supabase/setup.sql',import.meta.url),'utf8'))
   await pg.exec(await readFile(new URL('../supabase/migrations/202609220001_builders_id.sql',import.meta.url),'utf8'))
-  const passwords=new Map([[owner,'existing-owner-password'],[student,'existing-student-password']]), banned=new Set(),tokens=new Map()
+  // A Builders ID account made before aliases existed, to check the conversion.
+  const legacy=randomUUID()
+  await pg.query('insert into auth.users(id,email,email_confirmed_at,raw_app_meta_data,raw_user_meta_data) values($1,$2,now(),$3,$4)',[legacy,legacy+'@builders.invalid',{auth_type:'builders_id',builders_id:'BLD-7K2F9'},{display_name:'Legacy Student'}])
+  await pg.query("update ba_profiles set account_status='active',setup_completed_at=now() where id=$1",[legacy])
+  await pg.exec(await readFile(new URL('../supabase/migrations/202610180001_student_aliases.sql',import.meta.url),'utf8'))
+  const passwords=new Map([[owner,'existing-owner-password'],[student,'existing-student-password'],[legacy,'legacy-password-1']]), banned=new Set(),tokens=new Map()
   async function session(id){const sid=randomUUID(),token=Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url')+'.'+Buffer.from(JSON.stringify({sub:id,session_id:sid,exp:Math.floor(Date.now()/1000)+3600,iat:Math.floor(Date.now()/1000),aud:'authenticated',role:'authenticated'})).toString('base64url')+'.test-signature';await pg.query('insert into auth.sessions values($1,$2)',[sid,id]);tokens.set(token,{id,sid});return {access_token:token,refresh_token:'test-refresh'}}
   const ownerToken=(await session(owner)).access_token,studentToken=(await session(student)).access_token
   let failCreate=0, failPassword=false
@@ -39,11 +44,12 @@ export async function database() {
   const admin={
     async createUser(attributes){if(failCreate>0){failCreate--;return {error:{message:'simulated timeout'}}}try{const id=randomUUID();await pg.query('insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data,raw_app_meta_data) values($1,$2,now(),$3,$4)',[id,attributes.email,attributes.user_metadata,attributes.app_metadata]);passwords.set(id,attributes.password);return {data:{user:{id,email:attributes.email}},error:null}}catch(error){return {error:{message:error.message}}}},
     async updateUserById(id,attrs){if(attrs.password && failPassword){failPassword=false;return {error:{message:'simulated password failure'}}}if(attrs.password)passwords.set(id,attrs.password);if(attrs.ban_duration==='none')banned.delete(id);else if(attrs.ban_duration)banned.add(id);return {data:{user:{id}},error:null}},
+    async deleteUser(id){await pg.query('delete from auth.users where id=$1',[id]);passwords.delete(id);return {data:{},error:null}},
     async getUserById(id){return {data:{user:(await pg.query('select * from auth.users where id=$1',[id])).rows[0]},error:null}},
     async inviteUserByEmail(email,{data}){const id=randomUUID();await pg.query('insert into auth.users(id,email,invited_at,raw_user_meta_data) values($1,$2,now(),$3)',[id,email,data]);return {data:{user:{id}},error:null}},
   }
-  const s={pepper:'unit-tests-only-very-long-random-secret',site:'http://localhost:5173',db:{from:table=>new Query(table),auth:{getUser,admin},async rpc(name,args={}){try{const keys=Object.keys(args),rows=(await pg.query(`select * from public.${identifier(name)}(${keys.map((k,i)=>identifier(k)+'=> $'+(i+1)).join(',')})`,Object.values(args))).rows;return {data:name==='ba_claim_import'?rows:rows[0]?.[name],error:null}}catch(error){return {data:null,error:{message:error.message,code:error.code}}}}},auth:()=>({auth:{async signInWithPassword({email,password}){const u=(await pg.query('select * from auth.users where email=$1',[email])).rows[0];if(!u||passwords.get(u.id)!==password||banned.has(u.id))return {error:{message:'Bad credentials'}};return {data:{session:await session(u.id)},error:null}}}}),caller:token=>({async rpc(name){const t=tokens.get(token);await pg.query("select set_config('request.jwt.claim.sub',$1,false),set_config('request.jwt.claims',$2,false)",[t?.id||'',JSON.stringify({session_id:t?.sid})]);return s.db.rpc(name)}})}
-  return {pg,s,owner,student,ownerToken,studentToken,failNextCreate:()=>{failCreate++},failNextPassword:()=>{failPassword=true},close:()=>pg.close()}
+  const s={pepper:'unit-tests-only-very-long-random-secret',site:'http://localhost:5173',db:{from:table=>new Query(table),auth:{getUser,admin},async rpc(name,args={}){try{const keys=Object.keys(args),rows=(await pg.query(`select * from public.${identifier(name)}(${keys.map((k,i)=>identifier(k)+'=> $'+(i+1)).join(',')})`,Object.values(args))).rows;return {data:['ba_claim_import','ba_list_aliases'].includes(name)?rows:rows[0]?.[name],error:null}}catch(error){return {data:null,error:{message:error.message,code:error.code}}}}},auth:()=>({auth:{async signInWithPassword({email,password}){const u=(await pg.query('select * from auth.users where email=$1',[email])).rows[0];if(!u||passwords.get(u.id)!==password||banned.has(u.id))return {error:{message:'Bad credentials'}};await pg.query('update auth.users set last_sign_in_at=now() where id=$1',[u.id]);return {data:{session:await session(u.id)},error:null}}}}),caller:token=>({async rpc(name){const t=tokens.get(token);await pg.query("select set_config('request.jwt.claim.sub',$1,false),set_config('request.jwt.claims',$2,false)",[t?.id||'',JSON.stringify({session_id:t?.sid})]);return s.db.rpc(name)}})}
+  return {pg,s,owner,student,legacy,ownerToken,studentToken,failNextCreate:()=>{failCreate++},failNextPassword:()=>{failPassword=true},close:()=>pg.close()}
 }
 
 

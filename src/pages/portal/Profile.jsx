@@ -7,6 +7,8 @@ const inputClass =
 
 export default function Profile() {
   const { user, updateProfile } = useAuth()
+  const [name, setName] = useState(user?.name || '')
+  const [year, setYear] = useState(user?.year || '')
   const [whatBuilding, setWhatBuilding] = useState(user?.whatBuilding || '')
   const [photo, setPhoto] = useState(user?.photo || null)
   const [error, setError] = useState('')
@@ -26,7 +28,7 @@ export default function Profile() {
     setError('')
     setSaving(true)
     try {
-    await updateProfile({ whatBuilding, photo })
+    await updateProfile({ name, year, whatBuilding, photo })
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
     } catch (err) { setError(err.message) } finally { setSaving(false) }
@@ -55,12 +57,15 @@ export default function Profile() {
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">Name</label>
-            <input value={user?.name || ''} disabled className={`${inputClass} opacity-60 cursor-not-allowed`} />
+            <label htmlFor="profile-name" className="block text-sm font-medium text-ink mb-1.5">Display name</label>
+            <input id="profile-name" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} placeholder="What should members call you?" className={inputClass} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">Year group</label>
-            <input value={user?.year || ''} disabled className={`${inputClass} opacity-60 cursor-not-allowed`} />
+            <label htmlFor="profile-year" className="block text-sm font-medium text-ink mb-1.5">Year group</label>
+            <select id="profile-year" value={year} onChange={(e) => setYear(e.target.value)} className={inputClass}>
+              <option value="">Not set</option>
+              {['Y7', 'Y8', 'Y9', 'Y10', 'Y11', 'Y12', 'Y13'].map((y) => <option key={y} value={y}>{y}</option>)}
+            </select>
           </div>
         </div>
 

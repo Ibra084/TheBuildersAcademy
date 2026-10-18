@@ -1,13 +1,16 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import Landing from './pages/Landing'
 import Privacy from './pages/Privacy'
-import AccountSetup from './pages/AccountSetup'
-import ForgotPassword from './pages/ForgotPassword'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
+import SignIn from './pages/auth/SignIn'
+import AliasSignIn from './pages/auth/AliasSignIn'
+import SignUp from './pages/auth/SignUp'
+import CheckEmail from './pages/auth/CheckEmail'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import ResetPassword from './pages/auth/ResetPassword'
+import ChangePassword from './pages/auth/ChangePassword'
 import DigestArchive from './pages/DigestArchive'
 import DigestIssue from './pages/DigestIssue'
 import PortalLayout from './pages/portal/PortalLayout'
@@ -27,11 +30,17 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/sign-in" element={<SignIn />} />
+          <Route path="/alias" element={<AliasSignIn />} />
+          <Route path="/sign-up" element={<SignUp />} />
+          <Route path="/check-email" element={<CheckEmail />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/change-password" element={<ChangePassword />} />
+          <Route path="/login" element={<Navigate to="/sign-in" replace />} />
+          <Route path="/signup" element={<Navigate to="/sign-up" replace />} />
+          <Route path="/account/setup" element={<Navigate to="/alias" replace />} />
           <Route path="/privacy" element={<Privacy />} />
-          <Route path="/account/setup" element={<AccountSetup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/signup" element={<Signup />} />
           <Route path="/digest" element={<DigestArchive />} />
           <Route path="/digest/:id" element={<DigestIssue />} />
           <Route
