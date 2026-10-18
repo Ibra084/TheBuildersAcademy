@@ -16,14 +16,12 @@
     "@supabase/supabase-js": "^2.116.0",
     "@tailwindcss/vite": "^4.3.3",
     "@vercel/analytics": "^2.0.1",
-    "exceljs": "^4.4.0",
     "gsap": "^3.15.0",
+    "lucide-react": "^1.59.0",
     "marked": "^18.0.13",
-    "papaparse": "^5.7.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.3",
-    "yauzl": "^3.4.0"
+    "react-router-dom": "^7.18.3"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
@@ -34,10 +32,5 @@
     "playwright": "^1.63.0",
     "tailwindcss": "^4.3.3",
     "vite": "^8.3.0"
-  },
-  "overrides": {
-    "exceljs": {
-      "uuid": "^11.1.1"
-    }
   }
 }

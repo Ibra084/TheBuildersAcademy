@@ -1,51 +1,29 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
+import { NoticeBanner } from '../../components/auth/fields'
 import { useSessions } from '../../hooks/useSessions'
 import { useAuth } from '../../context/AuthContext'
 import { getAllUsers, getInitials } from '../../lib/auth'
 import { getDigests, getProjects } from '../../lib/store'
 import { useCheckIns, submitResponse } from '../../lib/checkin'
+import { NavIcon } from '../../components/portal/navigation'
+import { ArrowRight } from 'lucide-react'
+
+const NOTICES = {
+  welcome: "You're all set. Your new password is saved.",
+  'password-updated': 'Your password has been updated.',
+}
 
 function firstName(name = '') {
   return name.trim().split(/\s+/)[0]
-}
-
-function StatIcon({ type }) {
-  const paths = {
-    users: (
-      <>
-        <circle cx="9" cy="8.5" r="3" />
-        <path d="M3.5 20c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
-        <circle cx="17" cy="8.5" r="2.3" />
-        <path d="M15 15.3c2.4.3 4.5 2.1 4.5 4.7" />
-      </>
-    ),
-    calendar: (
-      <>
-        <rect x="4" y="5.5" width="16" height="14.5" rx="1.8" />
-        <path d="M4 9.5h16M8 3.5v3M16 3.5v3" strokeLinecap="round" />
-      </>
-    ),
-    folder: <path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h4l2 2H19a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5v-11Z" />,
-    target: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <circle cx="12" cy="12" r="5" />
-        <circle cx="12" cy="12" r="1" />
-      </>
-    ),
-  }
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] text-ink-soft/50">
-      {paths[type]}
-    </svg>
-  )
 }
 
 export default function Dashboard() {
   const { user } = useAuth()
   const { active: activeCheckIn, responses: checkInResponses, history, error: checkInError, refresh } = useCheckIns()
   const [responseError, setResponseError] = useState('')
+  const [params] = useSearchParams()
+  const notice = NOTICES[params.get('notice') ?? '']
   const [responding, setResponding] = useState(false)
   const myResponse = user ? checkInResponses[user.id] : null
   const respond = async status => {
@@ -79,9 +57,10 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {notice && <NoticeBanner>{notice}</NoticeBanner>}
       {(responseError || checkInError) && <p role="alert" className="text-sm text-red-600">{responseError || checkInError}</p>}
       {sessionsError && <p role="alert" className="text-sm text-red-600">Could not load sessions: {sessionsError}</p>}
-      {user?.isAdmin && <Link to="/portal/admin" className="glass-card block rounded-2xl p-5 text-sm font-semibold">Admin workspace → Publish sessions, resources, and updates</Link>}
+      {user?.isAdmin && <Link to="/portal/admin" className="glass-card flex items-center gap-2 rounded-2xl p-5 text-sm font-semibold">Admin workspace <ArrowRight size={16} aria-hidden="true" /> Publish sessions, resources, and updates</Link>}
       {/* Hero / greeting */}
       <div className="relative overflow-hidden rounded-2xl glass-dark text-white">
         <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
@@ -90,7 +69,7 @@ export default function Dashboard() {
           <div className="flex items-start justify-between gap-6">
             <div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
-                Welcome back, {firstName(user?.name)}.
+                Welcome back{user?.name ? `, ${firstName(user.name)}` : ''}.
               </h1>
               <p className="mt-2 text-gray-300 max-w-md">Here's what's happening in The Builders this week.</p>
               <div className="mt-6 flex flex-wrap gap-3">
@@ -167,7 +146,7 @@ export default function Dashboard() {
           <div key={stat.label} className="rounded-xl glass-card p-5">
             <div className="flex items-center justify-between">
               <span className="text-ink-soft text-[13px]">{stat.label}</span>
-              <StatIcon type={stat.icon} />
+              <NavIcon type={stat.icon} className="text-ink-muted" />
             </div>
             <div className="mt-2 text-2xl font-semibold text-ink">{stat.value}</div>
           </div>

@@ -11,7 +11,7 @@ export default function Landing() {
   useScrollToHash()
 
   return (
-    <div className="app-surface relative min-h-screen">
+    <div className="relative min-h-screen bg-white">
       <Navbar />
       <main>
         <Hero />
